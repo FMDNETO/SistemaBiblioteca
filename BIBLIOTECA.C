@@ -177,6 +177,7 @@ void listarEmprestimos(Livro *biblioteca, Emprestimo *emprestimos, int totalEmpr
 void liberarMemoria(Livro *biblioteca, Emprestimo *emprestimos) {
     free(biblioteca);
     free(emprestimos);
+    printf("Memória liberada com sucesso!\n");
 }
 
 // FUNÇÃO PRINCIPAL
