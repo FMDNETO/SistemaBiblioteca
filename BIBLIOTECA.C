@@ -24,12 +24,160 @@ typedef struct {
     char nomeUsuario[TAM_STRING]; // Nome do usuário que fez o empréstimo
 } Emprestimo;
 
+//============================
+// PROTÓTIPO DAS FUNÇÕES
+//============================
+
+void limparBufferEntrada();
+void exibirMenu();
+void cadastrarLivro(Livro *biblioteca, int *totalLivros);
+void listarLivros(Livro *biblioteca, int totalLivros);
+void emprestarLivro(Livro *biblioteca, Emprestimo *emprestimos, int *totalEmprestimos, int totalLivros);
+void listarEmprestimos(Livro *biblioteca, Emprestimo *emprestimos, int totalEmprestimos);
+void liberarMemoria(Livro *biblioteca, Emprestimo *emprestimos);
+
+//============================
+// IMPLEMENTAÇÃO DAS FUNÇÕES
+//============================
+
 // Função para limpar buffer do teclado
 void limparBufferEntrada() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
+// Função para exibir o menu
+void exibirMenu() {
+    printf("============================\n");
+    printf("  BIBLIOTECA PARTE 2 - MENU PRINCIPAL\n");
+    printf("============================\n");
+    printf("1. Cadastrar Livro\n");
+    printf("2. Listar Livros\n");
+    printf("3. Emprestar Livro\n");
+    printf("4. Listar Empréstimos\n");
+    printf("0. Sair\n");
+    printf("----------------------------\n");
+    printf("Escolha uma opção: ");
+}
+
+// Função para cadastrar um livro
+void cadastrarLivro(Livro *biblioteca, int *totalLivros) {
+    printf("CADASTRO DE LIVRO\n");
+    if(*totalLivros < MAX_LIVROS) {
+        printf("Nome do Livro: ");
+        fgets(biblioteca[*totalLivros].nome, TAM_STRING, stdin);
+        
+        printf("Autor do Livro: ");
+        fgets(biblioteca[*totalLivros].autor, TAM_STRING, stdin);
+
+        printf("Editora do Livro: ");
+        fgets(biblioteca[*totalLivros].editora, TAM_STRING, stdin);
+
+        printf("Edição do Livro: ");
+        scanf("%d", &biblioteca[*totalLivros].edicao);
+        limparBufferEntrada();
+
+        // Define o livro como disponível
+        biblioteca[*totalLivros].disponivel = 1;
+
+        (*totalLivros)++;
+        printf("Livro cadastrado com sucesso!\n");
+    } else {
+        printf("Capacidade máxima de livros atingida!\n");
+    }
+    printf("\nPressione ENTER para continuar...");
+    getchar();
+}
+
+// Função para listar todos os livros
+void listarLivros(Livro *biblioteca, int totalLivros) {
+    printf("LISTA DE LIVROS CADASTRADOS\n");
+    if(totalLivros == 0) {
+        printf("Nenhum livro cadastrado.\n");
+    } else {
+        for(int i = 0; i < totalLivros; i++) {
+            printf("Livro %d:\n", i + 1);
+            printf("Nome: %s", biblioteca[i].nome);
+            printf("Autor: %s", biblioteca[i].autor);
+            printf("Editora: %s", biblioteca[i].editora);
+            printf("Edição: %d\n", biblioteca[i].edicao);
+            printf("----------------------------\n");
+        }
+    }
+    printf("Pressione ENTER para continuar...");
+    getchar();
+}
+
+// Função para emprestar um livro
+void emprestarLivro(Livro *biblioteca, Emprestimo *emprestimos, int *totalEmprestimos, int totalLivros) {
+    printf("EMPRESTAR LIVRO\n");
+    if(*totalEmprestimos >= MAX_EMPRESTIMOS) {
+        printf("Limite de empréstimos atingido!\n");
+        printf("Pressione ENTER para continuar...");
+        getchar();
+    } else {
+        printf("Livros Disponíveis para Empréstimo:\n");
+        int livrosDisponiveis = 0;
+        
+        for(int i = 0; i < totalLivros; i++) {
+            if(biblioteca[i].disponivel) {
+                printf("%d. %s", i + 1, biblioteca[i].nome);
+                livrosDisponiveis++;
+            }
+        }
+
+        if (livrosDisponiveis == 0) {
+            printf("Nenhum livro disponível para empréstimo.\n");
+            printf("Pressione ENTER para continuar...");
+            getchar();
+        } else {
+            int escolha;
+            printf("Escolha o número do livro para emprestar: ");
+            scanf("%d", &escolha);
+            limparBufferEntrada();
+
+            if(escolha < 1 || escolha > totalLivros || !biblioteca[escolha - 1].disponivel) {
+                printf("Escolha inválida!\n");
+            } else {
+                printf("Digite o nome do usuário: ");
+                fgets(emprestimos[*totalEmprestimos].nomeUsuario, TAM_STRING, stdin);
+
+                // Registra o empréstimo
+                emprestimos[*totalEmprestimos].indiceLivro = escolha - 1;
+                biblioteca[escolha - 1].disponivel = 0; // Marca o livro como emprestado
+                (*totalEmprestimos)++;
+
+                printf("Livro emprestado com sucesso!\n");
+            }
+            printf("Pressione ENTER para continuar...");
+            getchar();
+        }
+    }
+}
+
+// Função para listar todos os empréstimos
+void listarEmprestimos(Livro *biblioteca, Emprestimo *emprestimos, int totalEmprestimos) {
+    printf("LISTA DE EMPRÉSTIMOS\n");
+    if(totalEmprestimos == 0) {
+        printf("Nenhum empréstimo registrado.\n");
+    } else {
+        for(int i = 0; i < totalEmprestimos; i++) {
+            int indiceLivro = emprestimos[i].indiceLivro;
+            printf("Empréstimo %d:\n", i + 1);
+            printf("Livro: %s", biblioteca[indiceLivro].nome);
+            printf("Usuário: %s", emprestimos[i].nomeUsuario);
+            printf("----------------------------\n");
+        }
+    }
+    printf("Pressione ENTER para continuar...");
+    getchar();
+}
+
+// Função para liberar a memória alocada
+void liberarMemoria(Livro *biblioteca, Emprestimo *emprestimos) {
+    free(biblioteca);
+    free(emprestimos);
+}
 
 // FUNÇÃO PRINCIPAL
 int main() {
@@ -55,149 +203,40 @@ int main() {
     int totalEmprestimos = 0;
 
     // LAÇO DO MENU
-    do{
-
-        //EXIBE O MENU
-        printf("============================\n");
-        printf("  BIBLIOTECA PARTE 2 - MENU PRINCIPAL\n");
-        printf("============================\n");
-        printf("1. Cadastrar Livro\n");
-        printf("2. Listar Livros\n");
-        printf("3. Emprestar Livro\n");
-        printf("4. Listar Empréstimos\n");
-        printf("0. Sair\n");
-        printf("----------------------------\n");
-        printf("Escolha uma opção: ");
-
-        // Lê a opção do usuário
+    do {
+        exibirMenu();
         scanf("%d", &opcao);
-        limparBufferEntrada(); // Limpa o buffer do teclado
+        limparBufferEntrada();
 
-        //EXECUTA A OPÇÃO ESCOLHIDA
         switch(opcao) {
-            case 1: //CADASTRO DO LIVRO
-                printf("CADASTRO DE LIVRO\n");
-                if(totalLivros < MAX_LIVROS) {
-                    // O acesso aos campos da struct é feito usando o ponteiro
-                    // ptr_biblioteca[totalLivros] para acessar o livro atual
-                    // Lê os dados do livro
-                    // Acesso assim como no array normal
-                    printf("Nome do Livro: ");
-                    fgets(ptr_biblioteca[totalLivros].nome, TAM_STRING, stdin);
-                    
-                    printf("Autor do Livro: ");
-                    fgets(ptr_biblioteca[totalLivros].autor, TAM_STRING, stdin);
-
-                    printf("Editora do Livro: ");
-                    fgets(ptr_biblioteca[totalLivros].editora, TAM_STRING, stdin);
-
-                    printf("Edição do Livro: ");
-                    scanf("%d", &ptr_biblioteca[totalLivros].edicao);
-                    limparBufferEntrada(); // Limpa o buffer do teclado
-
-                    // Define o livro como disponível
-                    ptr_biblioteca[totalLivros].disponivel = 1;
-
-                    totalLivros++;
-                    printf("Livro cadastrado com sucesso!\n");
-
-                } else {
-                    printf("Capacidade máxima de livros atingida!\n");
-                }
-                printf("\nPressione ENTER para continuar...");
-                getchar();
+            case 1:
+                cadastrarLivro(ptr_biblioteca, &totalLivros);
                 break;
 
-            case 2: //LISTA OS LIVROS CADASTRADOS
-                printf("LISTA DE LIVROS CADASTRADOS\n");
-                if(totalLivros == 0) {
-                    printf("Nenhum livro cadastrado.\n");
-                } else {
-                    for(int i = 0; i < totalLivros; i++) {
-                        printf("Livro %d:\n", i + 1);
-                        printf("Nome: %s", ptr_biblioteca[i].nome);
-                        printf("Autor: %s", ptr_biblioteca[i].autor);
-                        printf("Editora: %s", ptr_biblioteca[i].editora);
-                        printf("Edição: %d\n", ptr_biblioteca[i].edicao);
-                        printf("----------------------------\n");
-                    }
-                }
-                
-                printf("Pressione ENTER para continuar...");
-                getchar();
+            case 2:
+                listarLivros(ptr_biblioteca, totalLivros);
                 break;
 
-            case 3: //EMPRESTAR LIVRO
-                printf("EMPRESTAR LIVRO\n");
-                if(totalEmprestimos >= MAX_EMPRESTIMOS){
-                    printf("Limite de empréstimos atingido!\n");
-                    printf("Pressione ENTER para continuar...");
-                    getchar();
-                } else{
-                    printf("Livros Disponíveis para Empréstimo:\n");
-                    int livrosDisponiveis = 0;
-                    for(int i = 0; i < totalLivros; i++) {
-                        if(ptr_biblioteca[i].disponivel) {
-                            printf("%d. %s", i + 1, ptr_biblioteca[i].nome);
-                            livrosDisponiveis++;
-                        }
-                    }
-
-                    if (livrosDisponiveis == 0) {
-                        printf("Nenhum livro disponível para empréstimo.\n");
-                    } else {
-                        int escolha;
-                        printf("Escolha o número do livro para emprestar: ");
-                        scanf("%d", &escolha);
-                        limparBufferEntrada(); // Limpa o buffer do teclado
-
-                        if(escolha < 1 || escolha > totalLivros || !ptr_biblioteca[escolha - 1].disponivel) {
-                            printf("Escolha inválida!\n");
-                        } else {
-                            printf("Digite o nome do usuário: ");
-                            fgets(ptr_emprestimos[totalEmprestimos].nomeUsuario, TAM_STRING, stdin);
-
-                            // Registra o empréstimo
-                            ptr_emprestimos[totalEmprestimos].indiceLivro = escolha - 1;
-                            ptr_biblioteca[escolha - 1].disponivel = 0; // Marca o livro como emprestado
-                            totalEmprestimos++;
-
-                            printf("Livro emprestado com sucesso!\n");
-                        }
-                    }
-                }
+            case 3:
+                emprestarLivro(ptr_biblioteca, ptr_emprestimos, &totalEmprestimos, totalLivros);
                 break;
             
-            case 4: //LISTA OS EMPRÉSTIMOS
-                printf("LISTA DE EMPRÉSTIMOS\n");
-                if(totalEmprestimos == 0) {
-                    printf("Nenhum empréstimo registrado.\n");
-                } else {
-                    for(int i = 0; i < totalEmprestimos; i++) {
-                        int indiceLivro = ptr_emprestimos[i].indiceLivro;
-                        printf("Empréstimo %d:\n", i + 1);
-                        printf("Livro: %s", ptr_biblioteca[indiceLivro].nome);
-                        printf("Usuário: %s", ptr_emprestimos[i].nomeUsuario);
-                        printf("----------------------------\n");
-                    }
-                }
-                printf("Pressione ENTER para continuar...");
-                getchar();
+            case 4:
+                listarEmprestimos(ptr_biblioteca, ptr_emprestimos, totalEmprestimos);
                 break;
             
-            case 0: //SAIR DO PROGRAMA
+            case 0:
                 printf("Saindo do programa...\n");
-                free(ptr_biblioteca); // Libera a memória alocada para os livros
-                free(ptr_emprestimos); // Libera a memória alocada para os empréstimos
-                break;  
-
+                liberarMemoria(ptr_biblioteca, ptr_emprestimos);
+                break;
 
             default:
                 printf("Opção inválida! Tente novamente.\n");
                 printf("Pressione ENTER para continuar...");
                 getchar();
                 break;
-
-    }    } while(opcao != 0);
+        }
+    } while(opcao != 0);
+    
     return 0;
 }
